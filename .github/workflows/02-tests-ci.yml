@@ -1,7 +1,7 @@
 name: "Nível 2: Testes Automatizados"
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 env:
   NODE_VERSION: '18'
@@ -20,10 +20,16 @@ jobs:
       - name: "Checkout do código"
         uses: actions/checkout@v4
 
-      # INSIRA AQUI A LÓGICA PARA RODAR OS TESTES E VERIFICAR A COBERTURA
-      ###
-      ###
-      ###
+      - name: "Setup do Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: "Instalar dependências"
+        run: npm install
+
+      - name: "Rodar testes (com cobertura)"
+        run: npm run tests
 
       - name: "Extrair porcentagem de cobertura" # Esse step será validado pelo desafio, não altere o nome. No final, ele deve gerar o output "coverage" com a porcentagem de cobertura.
         id: coverage
@@ -31,6 +37,16 @@ jobs:
           COVERAGE=$(npx nyc report --reporter=text-summary | grep -oP 'Statements\s*:\s*\K[0-9\.]+(?=%)' | head -1)
           echo "Coverage: $COVERAGE%"
           echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: "Validar cobertura mínima de ${{ env.COVERAGE_MIN }}%"
+        run: |
+          echo "Cobertura atual: ${{ steps.coverage.outputs.coverage }}%"
+          echo "Cobertura mínima exigida: ${{ env.COVERAGE_MIN }}%"
+          if (( $(echo "${{ steps.coverage.outputs.coverage }} < ${{ env.COVERAGE_MIN }}" | bc -l) )); then
+            echo "Erro: A cobertura de testes é inferior a ${{ env.COVERAGE_MIN }}%."
+            exit 1
+          fi
+          echo "Sucesso: A cobertura de testes atende ao mínimo de ${{ env.COVERAGE_MIN }}%."
 
   generate-certificate: # DAQUI PARA BAIXO, NÃO ALTERAR
       name: "Desafio Nível 2 - Certificado"
