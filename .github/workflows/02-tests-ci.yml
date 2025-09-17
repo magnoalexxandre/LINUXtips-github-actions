@@ -1,6 +1,6 @@
 name: "Nível 2: Testes Automatizados"
 on:
-  pull_request:
+  push:
     branches: [ master ]
 
 env:
